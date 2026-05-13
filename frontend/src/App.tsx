@@ -20,10 +20,11 @@ function App() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const ADMIN_ADDRESS = "0QDbNONXZj1IeC1akPyTxWxlfSImhcpdEk6ei-yyTniUe94n";
+  const API_URL = "https://ton-p2p-market.onrender.com";
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch('http://localhost:8000/tasks');
+      const response = await fetch(`${API_URL}/tasks`);
       const data = await response.json();
       setTasks(data.reverse()); 
     } catch (e) {
@@ -100,7 +101,7 @@ function App() {
 
       await tonConnectUI.sendTransaction(transaction);
       
-      await fetch('http://localhost:8000/tasks', {
+      await fetch(`${API_URL}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +208,7 @@ function App() {
                 <button 
                   onClick={async () => {
                     await sendContractMessage(task.contract_address, "Dispute");
-                    await fetch(`http://localhost:8000/tasks/${task.id}?status=disputed`, { method: 'PATCH' });
+                    await fetch(`${API_URL}/tasks/${task.id}?status=disputed`, { method: 'PATCH' });
                     fetchTasks();
                   }}
                   style={{ background: 'none', border: 'none', color: '#f44336', fontSize: '12px', cursor: 'pointer', marginBottom: '10px' }}
@@ -223,7 +224,7 @@ function App() {
                     <button 
                       onClick={async () => {
                         await sendContractMessage(task.contract_address, "AdminRelease");
-                        await fetch(`http://localhost:8000/tasks/${task.id}?status=completed`, { method: 'PATCH' });
+                        await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                         fetchTasks();
                       }}
                       style={{ ...actionBtn('#4caf50'), fontSize: '12px' }}
@@ -231,7 +232,7 @@ function App() {
                     <button 
                       onClick={async () => {
                         await sendContractMessage(task.contract_address, "AdminRefund");
-                        await fetch(`http://localhost:8000/tasks/${task.id}?status=completed`, { method: 'PATCH' });
+                        await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                         fetchTasks();
                       }}
                       style={{ ...actionBtn('#f44336'), fontSize: '12px' }}
@@ -244,7 +245,7 @@ function App() {
               {task.status === 'active' && task.customer_address !== userAddress && (
                 <button onClick={async () => {
                   await sendContractMessage(task.contract_address, "Take");
-                  await fetch(`http://localhost:8000/tasks/${task.id}?status=taken&freelancer_address=${userAddress}`, { method: 'PATCH' });
+                  await fetch(`${API_URL}/tasks/${task.id}?status=taken&freelancer_address=${userAddress}`, { method: 'PATCH' });
                   fetchTasks();
                 }} style={actionBtn('#4caf50')}>Взять в работу</button>
               )}
@@ -257,7 +258,7 @@ function App() {
                   await sendContractMessage(task.contract_address, "Complete");
                   
                   // Отправляем на бэкенд и статус, и ссылку
-                  await fetch(`http://localhost:8000/tasks/${task.id}?status=work_submitted&result_link=${encodeURIComponent(link)}`, { 
+                  await fetch(`${API_URL}/tasks/${task.id}?status=work_submitted&result_link=${encodeURIComponent(link)}`, { 
                     method: 'PATCH' 
                   });
                   
@@ -276,7 +277,7 @@ function App() {
                       {isExpired && (
                         <button onClick={async () => {
                           await sendContractMessage(task.contract_address, "Refund");
-                          await fetch(`http://localhost:8000/tasks/${task.id}?status=completed`, { method: 'PATCH' });
+                          await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                           fetchTasks();
                         }} style={actionBtn('#f44336')}>⏰ Срок вышел: Вернуть TON</button>
                       )}
@@ -295,7 +296,7 @@ function App() {
                   {task.status === 'work_submitted' && (
                     <button onClick={async () => {
                       await sendContractMessage(task.contract_address, "Release");
-                      await fetch(`http://localhost:8000/tasks/${task.id}?status=completed`, { method: 'PATCH' });
+                      await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                       fetchTasks();
                     }} style={actionBtn('#0088cc')}>Подтвердить и Оплатить 💸</button>
                   )}
