@@ -3,6 +3,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -13,10 +14,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+load_dotenv()
 # Настройки Telegram
-BOT_TOKEN = "8414041113:AAE9xKBXmxW4jfNIcCBr3Sd9AohDmoXCPHE"
-CHAT_ID = "1129955575"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # --- Работа с БД ---
 
