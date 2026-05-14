@@ -16,7 +16,7 @@ function App() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('0.5');
-  const [hours, setHours] = useState('24');
+  const [hours, setHours] = useState('24.0');
   const [tasks, setTasks] = useState<any[]>([]);
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const ADMIN_ADDRESS = "0QDbNONXZj1IeC1akPyTxWxlfSImhcpdEk6ei-yyTniUe94n";
