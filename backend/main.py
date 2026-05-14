@@ -122,7 +122,7 @@ async def create_task(task: Task, background_tasks: BackgroundTasks):
         conn.close()
     
     if task.customer_tg_id:
-        msg = f"📦 <b>Заказ опубликован!</b>\n\n<b>{task.title}</b>\nЦена: {task.amount} TON"
+        msg = f"<b>Заказ опубликован!</b>\n\n<b>{task.title}</b>\nЦена: {task.amount} TON"
         background_tasks.add_task(send_tg_message, task.customer_tg_id, msg)
     
     return task
@@ -169,26 +169,31 @@ async def update_task(
 
     cust_id = updated_task['customer_tg_id']
     free_id = updated_task['freelancer_tg_id']
+    old_status = task_exists['status']
 
     # --- ЛОГИКА УВЕДОМЛЕНИЙ ---
     
     if status == 'taken':
         # Пишем заказчику
         if cust_id:
-            msg_cust = f"🤝 <b>Ваш заказ взят!</b>\nИсполнитель приступил к: <i>{updated_task['title']}</i>"
+            msg_cust = f"<b>Ваш заказ взят!</b>\nИсполнитель приступил к: <i>{updated_task['title']}</i>"
             background_tasks.add_task(send_tg_message, cust_id, msg_cust)
         # Пишем исполнителю
         if free_id:
-            msg_free = f"🚀 <b>Вы взяли заказ!</b>\nРабота над: <i>{updated_task['title']}</i>\n\nНе забудьте сдать результат через кнопку в приложении!"
+            msg_free = f"<b>Вы взяли заказ!</b>\nРабота над: <i>{updated_task['title']}</i>\n\nНе забудьте сдать результат через кнопку в приложении!"
             background_tasks.add_task(send_tg_message, free_id, msg_free)
         
     elif status == 'work_submitted' and cust_id:
-        msg = f"✅ <b>Работа сдана на проверку!</b>\n<i>{updated_task['title']}</i>\n🔗 {result_link}"
+        msg = f"<b>Работа сдана на проверку!</b>\n<i>{updated_task['title']}</i>\n🔗 {result_link}"
         background_tasks.add_task(send_tg_message, cust_id, msg)
         
     elif status == 'completed' and free_id:
-        msg = f"💸 <b>Заказ оплачен!</b>\nЗаказ <i>{updated_task['title']}</i> завершен. Деньги отправлены на ваш кошелек."
-        background_tasks.add_task(send_tg_message, free_id, msg)
+        if old_status == 'taken':
+            msg_fail = f"<b>Срок заказа истек!</b>\nВы не успели сдать работу <i>{updated_task['title']}</i> вовремя. Заказчик вернул средства."
+            background_tasks.add_task(send_tg_message, free_id, msg_fail)
+        else:
+            msg = f"<b>Заказ оплачен!</b>\nЗаказ <i>{updated_task['title']}</i> завершен. Деньги отправлены на ваш кошелек."
+            background_tasks.add_task(send_tg_message, free_id, msg)
 
     return {"status": "updated"}
 

@@ -163,7 +163,7 @@ function App() {
       {/* Форма создания */}
       {userAddress && (
         <div style={cardStyle}>
-          <h3 style={{ marginTop: 0, color: '#333' }}>📦 Новый заказ</h3>
+          <h3 style={{ marginTop: 0, color: '#333' }}>Новый заказ</h3>
           
           <label style={labelStyle}>Название задачи</label>
           <input placeholder="Что нужно сделать?" value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
@@ -194,7 +194,7 @@ function App() {
       )}
 
       {/* Список задач */}
-      <h3 style={{ marginBottom: '15px', color: '#333' }}>🚀 Лента заказов</h3>
+      <h3 style={{ marginBottom: '15px', color: '#333' }}>Лента заказов</h3>
       {tasks.filter(t => t.status !== 'completed').map((task) => {
         const isExpired = now > task.deadline;
         const isAdmin = userAddress === ADMIN_ADDRESS;
@@ -293,7 +293,7 @@ function App() {
                           await sendContractMessage(task.contract_address, "Refund");
                           await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                           fetchTasks();
-                        }} style={actionBtn('#f44336')}>⏰ Срок вышел: Вернуть TON</button>
+                        }} style={actionBtn('#f44336')}>Срок вышел: Вернуть TON</button>
                       )}
                     </div>
                   )}
@@ -312,17 +312,17 @@ function App() {
                       await sendContractMessage(task.contract_address, "Release");
                       await fetch(`${API_URL}/tasks/${task.id}?status=completed`, { method: 'PATCH' });
                       fetchTasks();
-                    }} style={actionBtn('#0088cc')}>Подтвердить и Оплатить 💸</button>
+                    }} style={actionBtn('#0088cc')}>Подтвердить и Оплатить</button>
                   )}
                 </div>
               )}
 
               {/* Состояние для фрилансера на проверке */}
               {task.status === 'work_submitted' && task.freelancer_address === userAddress && (
-                <div style={{ textAlign: 'center', color: '#4caf50', fontWeight: 'bold' }}>📡 На проверке у заказчика</div>
+                <div style={{ textAlign: 'center', color: '#4caf50', fontWeight: 'bold' }}>На проверке у заказчика</div>
               )}
               {task.status === 'disputed' && !isAdmin && (
-                <div style={{ textAlign: 'center', color: '#ff9800', fontWeight: 'bold' }}>⚖️ Идет разбирательство арбитром...</div>
+                <div style={{ textAlign: 'center', color: '#ff9800', fontWeight: 'bold' }}>Идет разбирательство арбитром...</div>
               )}
             </div>
           </div>
