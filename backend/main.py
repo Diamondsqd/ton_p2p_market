@@ -25,7 +25,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 def init_db():
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
-    # Добавлены поля customer_tg_id и freelancer_tg_id
+    
+    # 1. Создаем таблицу, если её нет
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY,
@@ -42,6 +43,19 @@ def init_db():
             freelancer_tg_id INTEGER
         )
     """)
+    
+    # 2. АВТО-МИГРАЦИЯ: Проверяем, есть ли новые колонки в старой БД
+    cursor.execute("PRAGMA table_info(tasks)")
+    columns = [column[1] for column in cursor.fetchall()]
+    
+    if "customer_tg_id" not in columns:
+        print("Добавляю колонку customer_tg_id...")
+        cursor.execute("ALTER TABLE tasks ADD COLUMN customer_tg_id INTEGER")
+        
+    if "freelancer_tg_id" not in columns:
+        print("Добавляю колонку freelancer_tg_id...")
+        cursor.execute("ALTER TABLE tasks ADD COLUMN freelancer_tg_id INTEGER")
+    
     conn.commit()
     conn.close()
 
@@ -53,7 +67,7 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- Модели и функции ---
+# --- Модели ---
 
 class Task(BaseModel):
     id: int
@@ -76,9 +90,11 @@ async def send_tg_message(chat_id: int, text: str):
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     async with httpx.AsyncClient() as client:
         try:
-            await client.post(url, json=payload)
+            res = await client.post(url, json=payload)
+            if res.status_code != 200:
+                print(f"Ошибка отправки сообщения: {res.text}")
         except Exception as e:
-            print(f"Ошибка ТГ: {e}")
+            print(f"Ошибка ТГ API: {e}")
 
 # --- Эндпоинты ---
 
@@ -121,9 +137,9 @@ async def update_task(
     freelancer_tg_id: Optional[int] = None
 ):
     conn = get_db_connection()
-    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    task_exists = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     
-    if not task:
+    if not task_exists:
         conn.close()
         raise HTTPException(status_code=404, detail="Task not found")
 
@@ -147,24 +163,31 @@ async def update_task(
         conn.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", params)
         conn.commit()
 
-    # Свежие данные после обновления для уведомлений
+    # Берем обновленные данные для уведомлений
     updated_task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     conn.close()
 
     cust_id = updated_task['customer_tg_id']
     free_id = updated_task['freelancer_tg_id']
 
-    # Логика персональных уведомлений
-    if status == 'taken' and cust_id:
-        msg = f"⏳ <b>Ваш заказ взят в работу!</b>\n<i>{updated_task['title']}</i>"
-        background_tasks.add_task(send_tg_message, cust_id, msg)
+    # --- ЛОГИКА УВЕДОМЛЕНИЙ ---
+    
+    if status == 'taken':
+        # Пишем заказчику
+        if cust_id:
+            msg_cust = f"🤝 <b>Ваш заказ взят!</b>\nИсполнитель приступил к: <i>{updated_task['title']}</i>"
+            background_tasks.add_task(send_tg_message, cust_id, msg_cust)
+        # Пишем исполнителю
+        if free_id:
+            msg_free = f"🚀 <b>Вы взяли заказ!</b>\nРабота над: <i>{updated_task['title']}</i>\n\nНе забудьте сдать результат через кнопку в приложении!"
+            background_tasks.add_task(send_tg_message, free_id, msg_free)
         
     elif status == 'work_submitted' and cust_id:
         msg = f"✅ <b>Работа сдана на проверку!</b>\n<i>{updated_task['title']}</i>\n🔗 {result_link}"
         background_tasks.add_task(send_tg_message, cust_id, msg)
         
     elif status == 'completed' and free_id:
-        msg = f"💸 <b>Заказ оплачен!</b>\nЗаказ <i>{updated_task['title']}</i> успешно завершен. Деньги отправлены на ваш адрес."
+        msg = f"💸 <b>Заказ оплачен!</b>\nЗаказ <i>{updated_task['title']}</i> завершен. Деньги отправлены на ваш кошелек."
         background_tasks.add_task(send_tg_message, free_id, msg)
 
     return {"status": "updated"}
