@@ -43,9 +43,9 @@ contract TaskEscrow with Deployable {
             mode: SendPayGasSeparately, 
             body: "Payment".asComment()
         });
-
+        
         send(SendParameters{
-            to: self.customer,
+            to: sender(),
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Contract Closed".asComment()
@@ -62,9 +62,9 @@ contract TaskEscrow with Deployable {
             mode: SendPayGasSeparately,
             body: "Admin Release".asComment()
         });
-
+        
         send(SendParameters{
-            to: self.customer,
+            to: sender(),
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Admin Closed".asComment()
@@ -72,30 +72,30 @@ contract TaskEscrow with Deployable {
     }
 
     receive("AdminRefund") {
-            require(sender() == self.admin, "Only admin");
-            require(self.is_disputed, "No dispute");
+        require(sender() == self.admin, "Only admin");
+        require(self.is_disputed, "No dispute");
 
-            send(SendParameters{
-                        to: self.freelancer!!,
-                        value: self.amount,
-                        mode: SendPayGasSeparately,
-                        body: "Admin Release".asComment()
-                    });
-            
-            send(SendParameters{
-                to: self.customer,
-                value: 0,
-                mode: SendRemainingBalance + SendDestroyIfZero,
-                body: "Admin Refunded".asComment()
-            });
-        }
+        send(SendParameters{
+            to: self.customer,
+            value: self.amount,
+            mode: SendPayGasSeparately,
+            body: "Refund Principal".asComment()
+        });
+        
+        send(SendParameters{
+            to: sender(),
+            value: 0,
+            mode: SendRemainingBalance + SendDestroyIfZero,
+            body: "Admin Closed".asComment()
+        });
+    }
 
     receive("Refund") {
         require(sender() == self.customer, "Only customer");
         require(now() > self.deadline || self.is_disputed, "Not possible");
 
         send(SendParameters{
-            to: self.customer,
+            to: sender(),
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Refunded".asComment()
