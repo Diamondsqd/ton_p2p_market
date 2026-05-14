@@ -17,20 +17,19 @@ contract TaskEscrow with Deployable {
     }
 
     receive("Deploy") {
-        // Ничего не делаем, деньги уже на балансе благодаря 'amount' в транзакции
     }
 
     receive("Take") {
         require(self.freelancer == null, "Already taken");
         require(sender() != self.customer, "Customer cannot be freelancer");
         self.freelancer = sender();
-        self.reply("Accepted".asComment()); // Возвращаем сдачу сразу
+        self.reply("Accepted".asComment());
     }
 
     receive("Complete") {
         require(sender() == self.freelancer, "Only freelancer");
         self.is_completed = true;
-        self.reply("Submitted".asComment()); // Возвращаем сдачу сразу
+        self.reply("Submitted".asComment());
     }
 
     receive("Release") {
@@ -38,7 +37,6 @@ contract TaskEscrow with Deployable {
         require(self.is_completed, "Work not submitted");
         require(self.freelancer != null, "No freelancer");
 
-        // 1. Отправляем фрилансеру ровно ту сумму, которую он заслужил
         send(SendParameters{
             to: self.freelancer!!,
             value: self.amount, 
@@ -46,7 +44,6 @@ contract TaskEscrow with Deployable {
             body: "Payment".asComment()
         });
 
-        // 2. Уничтожаем контракт и ВСЕ остатки (включая аренду и лишний газ) шлем заказчику
         send(SendParameters{
             to: self.customer,
             value: 0,
@@ -55,7 +52,6 @@ contract TaskEscrow with Deployable {
         });
     }
 
-    // Арбитраж — аналогично Release
     receive("AdminRelease") {
         require(sender() == self.admin, "Only admin");
         require(self.is_disputed, "No dispute");
@@ -74,6 +70,18 @@ contract TaskEscrow with Deployable {
             body: "Admin Closed".asComment()
         });
     }
+
+    receive("AdminRefund") {
+            require(sender() == self.admin, "Only admin");
+            require(self.is_disputed, "No dispute");
+
+            send(SendParameters{
+                to: self.customer,
+                value: 0,
+                mode: SendRemainingBalance + SendDestroyIfZero,
+                body: "Admin Refunded".asComment()
+            });
+        }
 
     receive("Refund") {
         require(sender() == self.customer, "Only customer");
