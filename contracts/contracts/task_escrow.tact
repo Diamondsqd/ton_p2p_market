@@ -45,7 +45,7 @@ contract TaskEscrow with Deployable {
         });
         
         send(SendParameters{
-            to: sender(),
+            to: self.customer,
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Contract Closed".asComment()
@@ -57,6 +57,13 @@ contract TaskEscrow with Deployable {
         require(self.is_disputed, "No dispute");
         
         send(SendParameters{
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue,
+            body: "Admin gas return".asComment()
+        });
+        
+        send(SendParameters{
             to: self.freelancer!!,
             value: self.amount,
             mode: SendPayGasSeparately,
@@ -64,10 +71,10 @@ contract TaskEscrow with Deployable {
         });
         
         send(SendParameters{
-            to: sender(),
+            to: self.customer,
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
-            body: "Admin Closed".asComment()
+            body: "Customer left-overs".asComment()
         });
     }
 
@@ -76,17 +83,17 @@ contract TaskEscrow with Deployable {
         require(self.is_disputed, "No dispute");
 
         send(SendParameters{
-            to: self.customer,
-            value: self.amount,
-            mode: SendPayGasSeparately,
-            body: "Refund Principal".asComment()
-        });
-        
-        send(SendParameters{
             to: sender(),
             value: 0,
+            mode: SendRemainingValue,
+            body: "Admin gas return".asComment()
+        });
+
+        send(SendParameters{
+            to: self.customer,
+            value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
-            body: "Admin Closed".asComment()
+            body: "Admin Refunded".asComment()
         });
     }
 
@@ -95,7 +102,7 @@ contract TaskEscrow with Deployable {
         require(now() > self.deadline || self.is_disputed, "Not possible");
 
         send(SendParameters{
-            to: sender(),
+            to: self.customer,
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Refunded".asComment()
