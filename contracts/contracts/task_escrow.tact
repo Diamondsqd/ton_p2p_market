@@ -44,14 +44,13 @@ contract TaskEscrow with Deployable {
         });
         
         send(SendParameters{
-            to: sender(), // Заказчик забирает свою сдачу
+            to: sender(),
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Contract Closed".asComment()
         });
     }
 
-    // --- АРБИТРАЖ: ВЫПЛАТА ИСПОЛНИТЕЛЮ ---
     receive("AdminRelease") {
         require(sender() == self.admin, "Only admin");
         require(self.is_disputed, "No dispute");
@@ -78,7 +77,6 @@ contract TaskEscrow with Deployable {
         });
     }
 
-    // --- АРБИТРАЖ: ВОЗВРАТ ЗАКАЗЧИКУ ---
     receive("AdminRefund") {
         require(sender() == self.admin, "Only admin");
         require(self.is_disputed, "No dispute");
