@@ -219,7 +219,13 @@ function App() {
               )}
               {task.status === 'disputed' && isAdmin && (
                 <div style={{ background: '#fff3e0', padding: '10px', borderRadius: '8px', border: '1px solid #ffb74d' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>⚖️ АРБИТРАЖ</div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>АРБИТРАЖ</div>
+                  <div style={{ background: '#e8f5e9', padding: '10px', borderRadius: '8px', marginBottom: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 'bold' }}>ССЫЛКА НА РЕЗУЛЬТАТ:</div>
+                      <a href={task.result_link} target="_blank" rel="noreferrer" style={{ wordBreak: 'break-all', color: '#0088cc' }}>
+                        {task.result_link}
+                      </a>
+                    </div>
                   <div style={{ display: 'flex', gap: '5px' }}>
                     <button 
                       onClick={async () => {
