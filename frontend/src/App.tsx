@@ -204,8 +204,7 @@ function App() {
             <p style={{ fontSize: '14px', color: '#555', marginBottom: '15px' }}>{task.description}</p>
             
             <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              {(task.status === 'work_submitted') && 
-               (task.customer_address === userAddress || task.freelancer_address === userAddress) && (
+              {(task.status === 'work_submitted') &&  (
                 <button 
                   onClick={async () => {
                     await sendContractMessage(task.contract_address, "Dispute");
