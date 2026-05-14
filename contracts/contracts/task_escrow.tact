@@ -16,8 +16,7 @@ contract TaskEscrow with Deployable {
         self.amount = amount;
     }
 
-    receive("Deploy") {
-    }
+    receive("Deploy") {}
 
     receive("Take") {
         require(self.freelancer == null, "Already taken");
@@ -45,13 +44,14 @@ contract TaskEscrow with Deployable {
         });
         
         send(SendParameters{
-            to: self.customer,
+            to: sender(), // Заказчик забирает свою сдачу
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Contract Closed".asComment()
         });
     }
 
+    // --- АРБИТРАЖ: ВЫПЛАТА ИСПОЛНИТЕЛЮ ---
     receive("AdminRelease") {
         require(sender() == self.admin, "Only admin");
         require(self.is_disputed, "No dispute");
@@ -62,7 +62,7 @@ contract TaskEscrow with Deployable {
             mode: SendRemainingValue,
             body: "Admin gas return".asComment()
         });
-        
+
         send(SendParameters{
             to: self.freelancer!!,
             value: self.amount,
@@ -78,9 +78,11 @@ contract TaskEscrow with Deployable {
         });
     }
 
+    // --- АРБИТРАЖ: ВОЗВРАТ ЗАКАЗЧИКУ ---
     receive("AdminRefund") {
         require(sender() == self.admin, "Only admin");
         require(self.is_disputed, "No dispute");
+
 
         send(SendParameters{
             to: sender(),
@@ -88,6 +90,7 @@ contract TaskEscrow with Deployable {
             mode: SendRemainingValue,
             body: "Admin gas return".asComment()
         });
+
 
         send(SendParameters{
             to: self.customer,
@@ -102,7 +105,7 @@ contract TaskEscrow with Deployable {
         require(now() > self.deadline || self.is_disputed, "Not possible");
 
         send(SendParameters{
-            to: self.customer,
+            to: sender(),
             value: 0,
             mode: SendRemainingBalance + SendDestroyIfZero,
             body: "Refunded".asComment()
