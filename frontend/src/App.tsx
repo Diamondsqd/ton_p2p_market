@@ -4,15 +4,12 @@ import { TonConnectButton, useTonAddress, useTonConnectUI } from '@tonconnect/ui
 import { Address, toNano, beginCell, storeStateInit } from '@ton/core';
 import { TaskEscrow } from './wrappers/TaskEscrow_TaskEscrow';
 const tg = (window as any).Telegram?.WebApp;
-// Фикс Buffer для браузера
-// @ts-ignore
 window.Buffer = Buffer;
 
 function App() {
   const userAddress = useTonAddress();
   const [tonConnectUI] = useTonConnectUI();
   const [user, setUser] = useState<any>(null);
-  // Состояния
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('0.5');
@@ -64,7 +61,6 @@ function App() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Хелпер для транзакций
   const sendContractMessage = async (contractAddress: string, text: string) => {
     const transaction = {
       validUntil: Math.floor(Date.now() / 1000) + 600,
@@ -77,11 +73,9 @@ function App() {
     return await tonConnectUI.sendTransaction(transaction);
   };
 
-  // Создание задачи
   const createTask = async () => {
     if (!userAddress) return alert("Подключите кошелек!");
     
-    // Валидация
     if (parseFloat(amount) <= 0 || parseFloat(hours) <= 0) {
       return alert("Стоимость и дедлайн должны быть больше нуля!");
     }
@@ -130,7 +124,6 @@ function App() {
     
      <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '500px', margin: '0 auto', background: '#f4f7f9', minHeight: '100vh' }}>
     
-    {/* --- ШАПКА ПРИЛОЖЕНИЯ --- */}
     <header style={{ 
       display: 'flex', 
       justifyContent: 'space-between', 
@@ -141,10 +134,8 @@ function App() {
       borderRadius: '12px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
     }}>
-      {/* 1. Кнопка TON Connect */}
       <TonConnectButton />
 
-      {/* 2. Блок профиля из Телеграма (вставляем сюда) */}
       {user && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ textAlign: 'right' }}>
@@ -160,7 +151,6 @@ function App() {
       )}
     </header>
 
-      {/* Форма создания */}
       {userAddress && (
         <div style={cardStyle}>
           <h3 style={{ marginTop: 0, color: '#333' }}>Новый заказ</h3>
@@ -181,7 +171,7 @@ function App() {
               <input 
                 type="number" 
                 min="0.001" 
-                step="0.001" // Позволяет вводить очень маленькие дробные числа
+                step="0.001"
                 value={hours} 
                 onChange={(e) => setHours(e.target.value)} 
                 style={inputStyle} 
@@ -193,7 +183,6 @@ function App() {
         </div>
       )}
 
-      {/* Список задач */}
       <h3 style={{ marginBottom: '15px', color: '#333' }}>Лента заказов</h3>
       {tasks.filter(t => t.status !== 'completed').map((task) => {
         const isExpired = now > task.deadline;
@@ -206,7 +195,6 @@ function App() {
               <span style={priceTagStyle}>{task.amount} TON</span>
             </div>
             
-            {/* ВЫВОД ТАЙМЕРА */}
             <div style={{ fontSize: '12px', color: isExpired ? '#f44336' : '#0088cc', marginBottom: '10px', fontWeight: 'bold' }}>
               {task.status === 'taken' || task.status === 'active' 
                 ? `⏳ Осталось: ${formatTimeLeft(task.deadline)}` 
@@ -216,7 +204,6 @@ function App() {
             <p style={{ fontSize: '14px', color: '#555', marginBottom: '15px' }}>{task.description}</p>
             
             <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              {/* КНОПКА СПОРА: доступна когда задача в работе или сдана */}
               {(task.status === 'taken' || task.status === 'work_submitted') && 
                (task.customer_address === userAddress || task.freelancer_address === userAddress) && (
                 <button 
@@ -227,10 +214,9 @@ function App() {
                   }}
                   style={{ background: 'none', border: 'none', color: '#f44336', fontSize: '12px', cursor: 'pointer', marginBottom: '10px' }}
                 >
-                  ⚠️ Открыть спор (Арбитраж)
+                  Открыть спор (Арбитраж)
                 </button>
               )}
-              {/* ПАНЕЛЬ АДМИНА (видна только тебе) */}
               {task.status === 'disputed' && isAdmin && (
                 <div style={{ background: '#fff3e0', padding: '10px', borderRadius: '8px', border: '1px solid #ffb74d' }}>
                   <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>⚖️ АРБИТРАЖ</div>
@@ -255,7 +241,6 @@ function App() {
                 </div>
               )}
               
-              {/* Логика Фрилансера */}
               {task.status === 'active' && task.customer_address !== userAddress && (
                 <button onClick={async () => {
                   await sendContractMessage(task.contract_address, "Take");
@@ -271,7 +256,6 @@ function App() {
 
                   await sendContractMessage(task.contract_address, "Complete");
                   
-                  // Отправляем на бэкенд и статус, и ссылку
                   await fetch(`${API_URL}/tasks/${task.id}?status=work_submitted&result_link=${encodeURIComponent(link)}`, { 
                     method: 'PATCH' 
                   });
@@ -280,14 +264,13 @@ function App() {
                 }} style={actionBtn('#ff9800')}>Сдать работу ✅</button>
               )}
 
-              {/* Логика Заказчика */}
               {task.customer_address === userAddress && (
                 <div style={{ textAlign: 'center' }}>
-                  {task.status === 'active' && <span style={{ color: '#0088cc' }}>🔍 Поиск исполнителя...</span>}
+                  {task.status === 'active' && <span style={{ color: '#0088cc' }}>Поиск исполнителя...</span>}
                   
                   {task.status === 'taken' && (
                     <div>
-                      <div style={{ color: '#ff9800', marginBottom: '10px' }}>⏳ Исполнитель работает</div>
+                      <div style={{ color: '#ff9800', marginBottom: '10px' }}>Исполнитель работает</div>
                       {isExpired && (
                         <button onClick={async () => {
                           await sendContractMessage(task.contract_address, "Refund");
@@ -317,7 +300,6 @@ function App() {
                 </div>
               )}
 
-              {/* Состояние для фрилансера на проверке */}
               {task.status === 'work_submitted' && task.freelancer_address === userAddress && (
                 <div style={{ textAlign: 'center', color: '#4caf50', fontWeight: 'bold' }}>На проверке у заказчика</div>
               )}
@@ -332,7 +314,6 @@ function App() {
   );
 }
 
-// Стили
 const cardStyle = { background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', marginBottom: '25px' };
 const inputStyle = { width: '100%', padding: '12px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' as const, fontSize: '14px' };
 const labelStyle = { display: 'block', fontSize: '12px', color: '#666', marginBottom: '5px', fontWeight: 'bold' as const, marginLeft: '5px' };

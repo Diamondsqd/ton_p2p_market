@@ -17,16 +17,13 @@ app.add_middleware(
 )
 load_dotenv()
 
-# Настройки Telegram
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# --- Работа с БД ---
 
 def init_db():
     conn = sqlite3.connect("tasks.db")
     cursor = conn.cursor()
     
-    # 1. Создаем таблицу, если её нет
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY,
@@ -44,7 +41,6 @@ def init_db():
         )
     """)
     
-    # 2. АВТО-МИГРАЦИЯ: Проверяем, есть ли новые колонки в старой БД
     cursor.execute("PRAGMA table_info(tasks)")
     columns = [column[1] for column in cursor.fetchall()]
     
@@ -59,7 +55,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Инициализируем базу при запуске
 init_db()
 
 def get_db_connection():
@@ -67,7 +62,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- Модели ---
 
 class Task(BaseModel):
     id: int
@@ -96,7 +90,6 @@ async def send_tg_message(chat_id: int, text: str):
         except Exception as e:
             print(f"Ошибка ТГ API: {e}")
 
-# --- Эндпоинты ---
 
 @app.get("/tasks")
 async def get_tasks():
@@ -163,7 +156,6 @@ async def update_task(
         conn.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", params)
         conn.commit()
 
-    # Берем обновленные данные для уведомлений
     updated_task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
     conn.close()
 
@@ -171,14 +163,11 @@ async def update_task(
     free_id = updated_task['freelancer_tg_id']
     old_status = task_exists['status']
 
-    # --- ЛОГИКА УВЕДОМЛЕНИЙ ---
     
     if status == 'taken':
-        # Пишем заказчику
         if cust_id:
             msg_cust = f"<b>Ваш заказ взят!</b>\nИсполнитель приступил к: <i>{updated_task['title']}</i>"
             background_tasks.add_task(send_tg_message, cust_id, msg_cust)
-        # Пишем исполнителю
         if free_id:
             msg_free = f"<b>Вы взяли заказ!</b>\nРабота над: <i>{updated_task['title']}</i>\n\nНе забудьте сдать результат через кнопку в приложении!"
             background_tasks.add_task(send_tg_message, free_id, msg_free)
