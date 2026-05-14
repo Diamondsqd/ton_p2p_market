@@ -76,6 +76,13 @@ contract TaskEscrow with Deployable {
             require(self.is_disputed, "No dispute");
 
             send(SendParameters{
+                        to: self.freelancer!!,
+                        value: self.amount,
+                        mode: SendPayGasSeparately,
+                        body: "Admin Release".asComment()
+                    });
+            
+            send(SendParameters{
                 to: self.customer,
                 value: 0,
                 mode: SendRemainingBalance + SendDestroyIfZero,
