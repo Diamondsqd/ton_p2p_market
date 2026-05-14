@@ -33,6 +33,12 @@ function App() {
   };
 
   useEffect(() => {
+    fetchTasks(); // Загружаем сразу
+    const interval = setInterval(fetchTasks, 5000); // И потом каждые 5 секунд
+    return () => clearInterval(interval); // Очищаем при закрытии
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setNow(Math.floor(Date.now() / 1000));
     }, 1000);
@@ -110,7 +116,8 @@ function App() {
           deadline: deadlineTimestamp,
           contract_address: contractAddress,
           customer_address: userAddress,
-          status: 'active'
+          status: 'active',
+          customer_tg_id: user?.id
         }),
       });
 
@@ -245,7 +252,7 @@ function App() {
               {task.status === 'active' && task.customer_address !== userAddress && (
                 <button onClick={async () => {
                   await sendContractMessage(task.contract_address, "Take");
-                  await fetch(`${API_URL}/tasks/${task.id}?status=taken&freelancer_address=${userAddress}`, { method: 'PATCH' });
+                  await fetch(`${API_URL}/tasks/${task.id}?status=taken&freelancer_address${userAddress}&freelancer_tg_id=${user?.id}`, { method: 'PATCH' });
                   fetchTasks();
                 }} style={actionBtn('#4caf50')}>Взять в работу</button>
               )}
