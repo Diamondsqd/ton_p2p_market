@@ -82,7 +82,7 @@ function App() {
     if (!userAddress) return alert("Подключите кошелек!");
     
     // Валидация
-    if (parseFloat(amount) <= 0 || parseInt(hours) <= 0) {
+    if (parseFloat(amount) <= 0 || parseFloat(hours) <= 0) {
       return alert("Стоимость и дедлайн должны быть больше нуля!");
     }
 
@@ -91,7 +91,7 @@ function App() {
       const adminAddr = Address.parse(ADMIN_ADDRESS);
       const amountInNano = toNano(amount);
       const gasForDeploy = toNano('0.05')
-      const deadlineTimestamp = Math.floor(Date.now() / 1000) + (parseInt(hours) * 3600);
+      const deadlineTimestamp = Math.floor(Date.now() / 1000) + Math.floor(parseFloat(hours) * 3600);
       const contract = await TaskEscrow.fromInit(customerAddr, adminAddr, BigInt(deadlineTimestamp),amountInNano);
       const contractAddress = contract.address.toString();
 
@@ -178,7 +178,14 @@ function App() {
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Срок (в часах)</label>
-              <input type="number" min="1" value={hours} onChange={(e) => setHours(e.target.value)} style={inputStyle} />
+              <input 
+                type="number" 
+                min="0.001" 
+                step="0.001" // Позволяет вводить очень маленькие дробные числа
+                value={hours} 
+                onChange={(e) => setHours(e.target.value)} 
+                style={inputStyle} 
+              />
             </div>
           </div>
           
