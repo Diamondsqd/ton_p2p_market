@@ -252,7 +252,7 @@ function App() {
               {task.status === 'active' && task.customer_address !== userAddress && (
                 <button onClick={async () => {
                   await sendContractMessage(task.contract_address, "Take");
-                  await fetch(`${API_URL}/tasks/${task.id}?status=taken&freelancer_address${userAddress}&freelancer_tg_id=${user?.id}`, { method: 'PATCH' });
+                  await fetch(`${API_URL}/tasks/${task.id}?status=taken&freelancer_address=${userAddress}&freelancer_tg_id=${user?.id}`, { method: 'PATCH' });
                   fetchTasks();
                 }} style={actionBtn('#4caf50')}>Взять в работу</button>
               )}
